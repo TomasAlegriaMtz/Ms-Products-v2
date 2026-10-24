@@ -1,0 +1,162 @@
+package com.ids.ms_products.exceptions;
+
+import com.ids.ms_products.repository.StockMovementActorNotFoundException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@ControllerAdvice
+public class GlobalExceptionHandler {
+    @ExceptionHandler(ProductNotFoundException.class)
+    public ResponseEntity<?> handleProductNotFound(ProductNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of("message", ex.getMessage()));
+    }
+
+    @ExceptionHandler(ProductAlreadyInactiveException.class)
+    public ResponseEntity<?> handleProductAlreadyInactive(ProductAlreadyInactiveException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("message", ex.getMessage()));
+    }
+
+    @ExceptionHandler(ProductAlreadyExistsException.class)
+    public ResponseEntity<?> handleProductAlreadyExists(ProductAlreadyExistsException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("message", ex.getMessage()));
+    }
+
+    @ExceptionHandler(PromotionNotFoundException.class)
+    public ResponseEntity<?> handlePromotionNotFound(PromotionNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of("message", ex.getMessage()));
+    }
+
+    @ExceptionHandler(PromotionConflictException.class)
+    public ResponseEntity<?> handlePromotionConflict(PromotionConflictException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("message", ex.getMessage()));
+    }
+
+    @ExceptionHandler(InsufficientStockException.class)
+    public ResponseEntity<?> handleInsufficientStock(InsufficientStockException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("message", ex.getMessage()));
+    }
+
+    @ExceptionHandler(StockMovementActorNotFoundException.class)
+    public ResponseEntity<?> handleStockMovementActorNotFound(StockMovementActorNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("message", ex.getMessage()));
+    }
+
+    @ExceptionHandler(PromotionException.class)
+    public ResponseEntity<?> handlePromotionException(PromotionException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("message", ex.getMessage()));
+    }
+
+    @ExceptionHandler(NoProductsAvailableException.class)
+    public ResponseEntity<?> handleNoProducts(NoProductsAvailableException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of("message", ex.getMessage()));
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, String>> handleValidation(
+            MethodArgumentNotValidException ex) {
+
+        Map<String, String> errors = new HashMap<>();
+
+        ex.getBindingResult().getFieldErrors().forEach(error ->
+                errors.put(error.getField(), error.getDefaultMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String, Object>> handleJsonError(
+            HttpMessageNotReadableException ex) {
+
+        Map<String, Object> response = Map.of(
+                "status", HttpStatus.BAD_REQUEST.value(),
+                "error", "Solicitud inválida",
+                "message", "Verifica que los valores sean numéricos."
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(response);
+    }
+
+    @ExceptionHandler(ProductException.class)
+    public ResponseEntity<Map<String, Object>> handleProductException(
+            ProductException ex) {
+
+        Map<String, Object> response = Map.of(
+                "status", HttpStatus.BAD_REQUEST.value(),
+                "error", "Solicitud inválida",
+                "message", ex.getMessage()
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(response);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, String>> handleIllegalArgument(
+            IllegalArgumentException ex) {
+
+        Map<String, String> response = new HashMap<>();
+
+        response.put("error", "Archivo inválido");
+        response.put("message", ex.getMessage());
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(response);
+    }
+
+    @ExceptionHandler(InvalidCsvException.class)
+    public ResponseEntity<Map<String, String>> handleInvalidCsv(
+            InvalidCsvException ex) {
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(Map.of(
+                        "error", "Archivo inválido",
+                        "message", ex.getMessage()
+                ));
+    }
+
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<Map<String, String>> handleMaxUploadSize(
+            MaxUploadSizeExceededException ex) {
+
+        Map<String, String> response = new HashMap<>();
+
+        response.put(
+                "error",
+                "Archivo demasiado grande"
+        );
+
+        response.put(
+                "message",
+                "El archivo supera el tamaño máximo permitido de 5 MB"
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.PAYLOAD_TOO_LARGE)
+                .body(response);
+    }
+
+}

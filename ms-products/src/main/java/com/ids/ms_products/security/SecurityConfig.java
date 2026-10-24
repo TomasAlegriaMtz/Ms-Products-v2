@@ -1,0 +1,66 @@
+package com.ids.ms_products.security;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.web.SecurityFilterChain;
+
+@Configuration
+@EnableMethodSecurity // habilita @PreAuthorize en controllers
+public class SecurityConfig {
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http.csrf(cus -> cus.disable())
+                .authorizeHttpRequests(auth -> auth
+
+                        .requestMatchers(HttpMethod.POST, "/api/admin/products/import").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST,"/api/products/**").hasRole("ADMIN")
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/products/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/products/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/products/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/products/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/promotions", "/api/promotions/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/promotions", "/api/promotions/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/promotions", "/api/promotions/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/promotions", "/api/promotions/**").hasRole("ADMIN")
+                        //.requestMatchers("/api/products/**").hasRole("USER")
+                        .anyRequest().permitAll()
+                )
+                .httpBasic(Customizer.withDefaults());
+        return http.build();
+    }
+
+    @Bean
+    public UserDetailsService userDetailsService() {
+        UserDetails admin = User.withUsername("admin.principal@example.com")
+                .password("{noop}admin123")
+                .roles("ADMIN")
+                .build();
+
+        UserDetails secondadmin = User.withUsername("admin.dos@example.com")
+                .password("{noop}admin321")
+                .roles("ADMIN")
+                .build();
+
+        UserDetails client = User.withUsername("cliente1@demo.com")
+                .password("{noop}client123")
+                .roles("CLIENT")
+                .build();
+
+        UserDetails secondClient = User.withUsername("cliente2@demo.com")
+                .password("{noop}client123")
+                .roles("CLIENT")
+                .build();
+
+        return new InMemoryUserDetailsManager(admin, secondadmin, client, secondClient);
+    }
+}
