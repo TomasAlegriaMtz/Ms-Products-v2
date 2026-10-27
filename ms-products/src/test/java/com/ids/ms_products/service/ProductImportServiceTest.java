@@ -24,7 +24,7 @@ import static org.mockito.Mockito.*;
 class ProductImportServiceTest {
 
     private ProductImportService importService;
-    private IProductService productService;
+    private ProductService productService;
 
     @BeforeEach
     void setUp() {
@@ -33,7 +33,7 @@ class ProductImportServiceTest {
                 .buildDefaultValidatorFactory()
                 .getValidator();
 
-        productService = mock(IProductService.class);
+        productService = mock(ProductService.class);
 
         importService = new ProductImportService(
                 validator,

@@ -11,7 +11,7 @@ import com.ids.ms_products.dto.ProductRegisterRequest;
 import com.ids.ms_products.exceptions.InvalidCsvException;
 import com.ids.ms_products.exceptions.ProductAlreadyExistsException;
 import com.ids.ms_products.exceptions.ProductException;
-import com.ids.ms_products.service.IProductService;
+import com.ids.ms_products.service.ProductService;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -33,9 +33,9 @@ public class ProductImportService {
     private static final long MAX_FILE_SIZE = 5L * 1024 * 1024;
 
     private final Validator validator;
-    private final IProductService productService;
+    private final ProductService productService;
 
-    public ProductImportService(Validator validator, IProductService productService) {
+    public ProductImportService(Validator validator, ProductService productService) {
         this.validator = validator;
         this.productService = productService;
     }
