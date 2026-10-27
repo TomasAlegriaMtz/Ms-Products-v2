@@ -2,7 +2,7 @@ package com.ids.ms_products.controller;
 
 import com.ids.ms_products.dto.*;
 import com.ids.ms_products.exceptions.ProductException;
-import com.ids.ms_products.service.IProductService;
+import com.ids.ms_products.service.ProductService;
 import com.ids.ms_products.service.impl.ProductImportService;
 import com.ids.ms_products.service.impl.StockMovementService;
 import org.springframework.data.domain.Page;
@@ -26,11 +26,11 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/products")
 public class ProductController {
-    private final IProductService service;
+    private final ProductService service;
     private final StockMovementService stockMovementService;
     private final ProductImportService importService;
 
-    public ProductController(StockMovementService stockMovementService, IProductService service, ProductImportService importService) {
+    public ProductController(StockMovementService stockMovementService, ProductService service, ProductImportService importService) {
         this.stockMovementService = stockMovementService;
         this.service = service;
         this.importService = importService;
@@ -60,15 +60,15 @@ public class ProductController {
     }
 
     //Consultar el detalle de un producto. Alfredo
-    @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('CLIENT','ADMIN')")
-    public ResponseEntity<ProductResponseDTO> getProductById(@PathVariable Integer id) {
-        return ResponseEntity.ok(service.getProductById(id));
+    @GetMapping("/{id}/detail")
+    //@PreAuthorize("hasAnyRole('CLIENT','ADMIN')")
+    public ResponseEntity<ProductResponseDTO> getProductDetailById(@PathVariable Integer id) {
+        return ResponseEntity.ok(service.getProductDetailById(id));
     }
 
     //Actualizar nombre, descripción, precio u otros datos permitidos. Alfredo
     @PutMapping("/{id}")
-    //@PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProductResponseDTO> updateProduct(@PathVariable Integer id,
                                                             @Valid @RequestBody ProductRequestDTO request,
                                                             @RequestHeader(value = "rol", required = false) String rol){
@@ -80,7 +80,7 @@ public class ProductController {
 
     //Ajustar existencias bajo reglas controladas. Alfredo
     //Cambiar a Patch y la ruta a /{id}/stock
-    @PostMapping("/stock-adjustments")
+    @PatchMapping("/stock-adjustments")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<StockMovementResponse> adjustStock(
             @PathVariable Integer id,

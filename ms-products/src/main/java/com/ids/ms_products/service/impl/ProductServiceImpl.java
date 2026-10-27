@@ -1,5 +1,6 @@
 package com.ids.ms_products.service.impl;
 
+import com.ids.ms_products.constants.ErrorMessages;
 import com.ids.ms_products.dto.*;
 import com.ids.ms_products.exceptions.*;
 import com.ids.ms_products.entity.Category;
@@ -8,7 +9,7 @@ import com.ids.ms_products.entity.Product;
 import com.ids.ms_products.repository.CategoryRepository;
 import com.ids.ms_products.repository.PriceHistoryRepository;
 import com.ids.ms_products.repository.ProductRepository;
-import com.ids.ms_products.service.IProductService;
+import com.ids.ms_products.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -24,8 +25,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
-public class ProductServiceImpl implements IProductService{
-    @Autowired
+public class ProductServiceImpl implements ProductService{
+    @Autowired 
     private ProductRepository repository;
     @Autowired
     private CategoryRepository categoryRepository;
@@ -83,9 +84,9 @@ public class ProductServiceImpl implements IProductService{
 
 
     @Override
-    public ProductResponseDTO getProductById(Integer id) {
+    public ProductResponseDTO getProductDetailById(Integer id) {
         Product p = repository.findById(id)
-                .orElseThrow(() -> new ProductNotFoundException("No se encontró el producto con id " + id));
+                .orElseThrow(() -> new ProductNotFoundException(String.format(ErrorMessages.PRODUCT_NOT_FOUND, id)));
 
         return responseDTO(p);
     }
