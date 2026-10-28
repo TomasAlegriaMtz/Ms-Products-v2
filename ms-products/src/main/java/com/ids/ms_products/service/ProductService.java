@@ -14,4 +14,5 @@ public interface ProductService {
     Integer getStockByProductId(Integer id);
     BulkPriceUpdateResponse bulkUpdatePrices(BulkPriceUpdateRequest request);
     Page<ProductResponseDTO> catalogProducts(ProductRequestPagDTO dto);
+    ProductAvailabilityResponseDTO getProductAvailability(Integer id, Integer quantity);
 }

@@ -291,4 +291,25 @@ public class ProductServiceImpl implements ProductService{
     private List<ProductResponseDTO> listResponseDTO(List<Product> products){
         return products.stream().map(this::responseDTO).toList();
     }
+
+
+    @Override
+    public ProductAvailabilityResponseDTO getProductAvailability(Integer id, Integer quantity) {
+
+        if (quantity == null || quantity <= 0) {
+            throw new ProductException("La cantidad solicitada debe ser mayor a cero");
+        }
+
+        Product product = repository.findById(id)
+                .orElseThrow(() -> new ProductNotFoundException(
+                        "No se encontró el producto con id " + id));
+
+        boolean available = Boolean.TRUE.equals(product.getActive())
+                && product.getStock() != null
+                && product.getStock() >= quantity;
+
+        return new ProductAvailabilityResponseDTO(product.getId(), available);
+    }
+
+
 }
