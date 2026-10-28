@@ -18,8 +18,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 import org.springframework.web.multipart.MultipartFile;
+import static com.ids.ms_products.constants.ErrorMessages.ACCESS_DENIED;
 
 import java.io.IOException;
+import java.nio.file.AccessDeniedException;
 import java.util.List;
 import java.util.Map;
 
@@ -68,13 +70,10 @@ public class ProductController {
 
     //Actualizar nombre, descripción, precio u otros datos permitidos. Alfredo
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ProductResponseDTO> updateProduct(@PathVariable Integer id,
-                                                            @Valid @RequestBody ProductRequestDTO request,
-                                                            @RequestHeader(value = "rol", required = false) String rol){
-        if(!"admin".equalsIgnoreCase(rol)){
-            throw new ProductException("Acceso denegado: Se requieren permisos de administrador");
-        }
+    public ResponseEntity<ProductResponseDTO> updateProduct(
+        @PathVariable Integer id,
+        @Valid @RequestBody ProductRequestDTO request) {
+            
         return ResponseEntity.ok(service.updateProduct(id, request));
     }
 
