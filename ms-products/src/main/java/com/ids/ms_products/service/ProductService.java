@@ -15,4 +15,6 @@ public interface ProductService {
     BulkPriceUpdateResponse bulkUpdatePrices(BulkPriceUpdateRequest request);
     Page<ProductResponseDTO> catalogProducts(ProductRequestPagDTO dto);
     ProductAvailabilityResponseDTO getProductAvailability(Integer id, Integer quantity);
+    // Activar o desactivar un producto mediante su ID. Edson
+    void updateProductStatus(Integer id, Boolean active);
 }

@@ -138,5 +138,19 @@ public class ProductController {
         return ResponseEntity.ok(service.getProductAvailability(id, quantity));
     }
 
+    // Activar o desactivar un producto mediante su ID. Edson
+    @PatchMapping("/{id}/status")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, String>> updateProductStatus(
+            @PathVariable @Positive Integer id,
+            @Valid @RequestBody ProductStatusRequestDTO request) {
+
+        service.updateProductStatus(id, request.getActive());
+
+        return ResponseEntity.ok(
+                Map.of("message", "Estado del producto actualizado correctamente")
+        );
+    }
+
 
 }
