@@ -92,22 +92,26 @@ public class ProductServiceImpl implements ProductService{
     }
 
     @Override
-    public ProductResponseDTO updateProduct(Integer id, ProductRequestDTO dto) {
+    public ProductResponseDTO updateProduct(
+        Integer id, 
+        ProductRequestDTO dto) {
+
         Product product = repository.findById(id)
-                .orElseThrow(() -> new ProductNotFoundException("No se encontró el producto con el ID: " + id));
+                .orElseThrow(() -> new ProductNotFoundException(
+                    String.format(
+                        ErrorMessages.PRODUCT_NOT_FOUND, 
+                        id
+                    )
+                ));
 
-        if (dto.getName() == null || dto.getName().isBlank()){
-            throw new ProductException("El nombre del producto es obligatorio");
-        }
-
-        if (dto.getPrice() == null || dto.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new ProductException("El precio debe ser mayor a cero");
-        }
-
-        validarReglaStock(dto.getStock());
+        
 
         Category category = categoryRepository.findById(dto.getCategoryId())
-                .orElseThrow(() -> new ProductException("La categoría no existe"));
+                .orElseThrow(() -> new ProductNotFoundException(
+                    String.format(
+                        ErrorMessages.PRODUCT_CATEGORY_NOT_FOUND
+                    )
+                ));
 
         product.setName(dto.getName());
         product.setDescription(dto.getDescription());
