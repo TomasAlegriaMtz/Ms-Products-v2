@@ -1,0 +1,6 @@
+.idea/
+*.iml
+**/target/
+*.log
+.DS_Store
+ms-products/productos_*.csv
