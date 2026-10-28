@@ -23,8 +23,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 import org.springframework.web.multipart.MultipartFile;
+import static com.ids.ms_products.constants.ErrorMessages.ACCESS_DENIED;
 
 import java.io.IOException;
+import java.nio.file.AccessDeniedException;
 import java.util.List;
 import java.util.Map;
 
@@ -110,9 +112,8 @@ public class ProductController {
             @ApiResponse(responseCode = "404", description = "Producto no encontrado")
     })
     @GetMapping("/{id}/detail")
-    public ResponseEntity<ProductResponseDTO> getProductDetailById(
-            @Parameter(description = "ID único del producto", example = "1")
-            @PathVariable Integer id) {
+    //@PreAuthorize("hasAnyRole('CLIENT','ADMIN')")
+    public ResponseEntity<ProductResponseDTO> getProductDetailById(@PathVariable Integer id) {
         return ResponseEntity.ok(service.getProductDetailById(id));
     }
 
@@ -129,16 +130,10 @@ public class ProductController {
             @ApiResponse(responseCode = "404", description = "Producto no encontrado")
     })
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProductResponseDTO> updateProduct(
-            @Parameter(description = "ID del producto a actualizar", example = "1")
-            @PathVariable Integer id,
-            @Valid @RequestBody ProductRequestDTO request,
-            @Parameter(description = "Rol enviado en el header (debe ser admin)", example = "admin")
-            @RequestHeader(value = "rol", required = false) String rol){
-        if(!"admin".equalsIgnoreCase(rol)){
-            throw new ProductException("Acceso denegado: Se requieren permisos de administrador");
-        }
+        @PathVariable Integer id,
+        @Valid @RequestBody ProductRequestDTO request) {
+
         return ResponseEntity.ok(service.updateProduct(id, request));
     }
 
@@ -157,7 +152,6 @@ public class ProductController {
     @PatchMapping("/{id}/stock-adjustments")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<StockMovementResponse> adjustStock(
-            @Parameter(description = "ID del producto a ajustar stock", example = "1")
             @PathVariable Integer id,
             @Valid @RequestBody StockAdjustmentRequest request,
             Authentication authentication) {
@@ -213,9 +207,7 @@ public class ProductController {
     })
     @GetMapping("/{id}/stock")
     @PreAuthorize("hasAnyRole('CLIENT','ADMIN')")
-    public ResponseEntity<Map<String, Object>> getProductStock(
-            @Parameter(description = "ID del producto", example = "1")
-            @PathVariable Integer id) {
+    public ResponseEntity<Map<String, Object>> getProductStock(@PathVariable Integer id) {
         Integer stock = service.getStockByProductId(id);
         return ResponseEntity.ok(Map.of(
                 "productId", id,

@@ -13,7 +13,10 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import static com.ids.ms_products.constants.ErrorMessages.ACCESS_DENIED;
+import static com.ids.ms_products.constants.ErrorMessages.ACCESS_DENIED_CODE;
 
+import java.nio.file.AccessDeniedException;
 import java.time.Instant;
 import java.util.stream.Collectors;
 
@@ -196,4 +199,17 @@ public class GlobalExceptionHandler {
                 "Ocurrió un error interno en el servidor",
                 request);
     }
+
+        @ExceptionHandler(AccessDeniedException.class)
+        public ResponseEntity<ErrorResponse> handleAccessDenied(
+                AccessDeniedException ex,
+                HttpServletRequest request) {
+
+        return buildError(
+                HttpStatus.FORBIDDEN,
+                ACCESS_DENIED_CODE,
+                ex.getMessage(),
+                request
+        );
+        }
 }

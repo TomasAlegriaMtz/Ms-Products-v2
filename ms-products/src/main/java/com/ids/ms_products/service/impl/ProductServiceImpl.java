@@ -92,18 +92,14 @@ public class ProductServiceImpl implements ProductService{
     public ProductResponseDTO updateProduct(Integer id, ProductRequestDTO dto) {
         Product product = findProductById(id);
 
-        if (dto.getName() == null || dto.getName().isBlank()){
-            throw new ProductNotValidException(String.format(ErrorMessages.PRODUCT_NAME_INVALID));
-        }
 
-        if (dto.getPrice() == null || dto.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new ProductNotValidException(String.format(ErrorMessages.PRODUCT_PRICE_INVALID));
-        }
-
-        validarReglaStock(dto.getStock());
 
         Category category = categoryRepository.findById(dto.getCategoryId())
-                .orElseThrow(() -> new ProductException(String.format(ErrorMessages.CATEGORY_INVALID)));
+                .orElseThrow(() -> new ProductNotFoundException(
+                    String.format(
+                        ErrorMessages.PRODUCT_CATEGORY_NOT_FOUND
+                    )
+                ));
 
         product.setName(dto.getName());
         product.setDescription(dto.getDescription());
