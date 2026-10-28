@@ -316,4 +316,21 @@ public class ProductServiceImpl implements ProductService{
     }
 
 
+    // Activar o desactivar un producto mediante su ID. Edson
+    @Override
+    @Transactional
+    public void updateProductStatus(Integer id, Boolean active) {
+
+        if (active == null) {
+            throw new ProductException("El estado del producto es obligatorio");
+        }
+
+        Product product = repository.findById(id)
+                .orElseThrow(() -> new ProductNotFoundException(
+                        "No se encontró el producto con id " + id));
+
+        product.setActive(active);
+        repository.save(product);
+    }
+
 }
