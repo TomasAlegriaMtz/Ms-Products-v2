@@ -26,12 +26,15 @@ import java.util.stream.Collectors;
 
 @Service
 public class ProductServiceImpl implements ProductService{
-    @Autowired 
-    private ProductRepository repository;
-    @Autowired
-    private CategoryRepository categoryRepository;
-    @Autowired
-    private PriceHistoryRepository priceHistoryRepository;
+    private final ProductRepository repository;
+    private final CategoryRepository categoryRepository;
+    private final PriceHistoryRepository priceHistoryRepository;
+
+    public ProductServiceImpl(ProductRepository repository, CategoryRepository categoryRepository, PriceHistoryRepository priceHistoryRepository){
+        this.repository = repository;
+        this.categoryRepository = categoryRepository;
+        this.priceHistoryRepository = priceHistoryRepository;
+    }
 
     private static final int PAGE_SIZE = 5;
 
@@ -92,14 +95,18 @@ public class ProductServiceImpl implements ProductService{
     public ProductResponseDTO updateProduct(Integer id, ProductRequestDTO dto) {
         Product product = findProductById(id);
 
+        if (dto.getName() == null || dto.getName().isBlank()){
+            throw new ProductNotValidException(ErrorMessages.PRODUCT_NAME_INVALID);
+        }
 
+        if (dto.getPrice() == null || dto.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new ProductNotValidException(ErrorMessages.PRODUCT_PRICE_INVALID);
+        }
+
+        validarReglaStock(dto.getStock());
 
         Category category = categoryRepository.findById(dto.getCategoryId())
-                .orElseThrow(() -> new ProductNotFoundException(
-                    String.format(
-                        ErrorMessages.PRODUCT_CATEGORY_NOT_FOUND
-                    )
-                ));
+                .orElseThrow(() -> new ProductException(ErrorMessages.PRODUCT_CATEGORY_NOT_FOUND));
 
         product.setName(dto.getName());
         product.setDescription(dto.getDescription());
@@ -112,16 +119,32 @@ public class ProductServiceImpl implements ProductService{
         return responseDTO(product);
     }
 
-    //Que pueda activar un producto tambien. Alfredo
+    @Override
+    @Transactional
+    public String updateProductStatus(Integer id, Boolean active) {
+        Product product = findProductById(id);
+        boolean targetStatus = (active != null) ? active : !Boolean.TRUE.equals(product.getActive());
+        if (targetStatus) {
+            if (Boolean.TRUE.equals(product.getActive())) {
+                throw new ProductException("El producto ya se encuentra activo en el catálogo");
+            }
+            product.setActive(true);
+            repository.save(product);
+            return "Producto activado en el catálogo con éxito.";
+        } else {
+            if (Boolean.FALSE.equals(product.getActive())) {
+                throw new ProductAlreadyInactiveException("El producto ya fue retirado del catálogo");
+            }
+            product.setActive(false);
+            repository.save(product);
+            return "Producto retirado del catálogo con éxito.";
+        }
+    }
+
     @Override
     @Transactional
     public void deleteProduct(Integer id) {
-        Product product = findProductById(id);
-        if (Boolean.FALSE.equals(product.getActive())) {
-            throw new ProductAlreadyInactiveException("El producto ya fue retirado del catálogo");
-        }
-        product.setActive(false);
-        repository.save(product);
+        updateProductStatus(id, false);
     }
 
     @Override
@@ -149,7 +172,6 @@ public class ProductServiceImpl implements ProductService{
         }
 
         List<PriceUpdateItem> updates = request.getUpdates();
-        validarTamanoLote(updates);
 
         Set<Integer> uniqueIds = new HashSet<>();
         List<Integer> duplicateIds = new ArrayList<>();
@@ -216,8 +238,6 @@ public class ProductServiceImpl implements ProductService{
         );
     }
 
-    private void validarTamanoLote(List<PriceUpdateItem> updates) {
-    }
 
     private String getCurrentUsername() {
         try {

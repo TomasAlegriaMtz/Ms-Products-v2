@@ -14,4 +14,5 @@ public interface ProductService {
     Integer getStockByProductId(Integer id);
     BulkPriceUpdateResponse bulkUpdatePrices(BulkPriceUpdateRequest request);
     Page<ProductResponseDTO> catalogProducts(ProductRequestPagDTO dto);
+    String updateProductStatus(Integer id, Boolean active);
 }
