@@ -47,6 +47,13 @@ public class GlobalExceptionHandler {
                 ex.getMessage(), request);
     }
 
+    @ExceptionHandler(ProductNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleProductNotValid(
+            ProductNotValidException ex, HttpServletRequest request){
+        return buildError(HttpStatus.NOT_FOUND, "PRODUCT_NOT_VALID",
+                ex.getMessage(), request);
+    }
+
     @ExceptionHandler(ProductAlreadyInactiveException.class)
     public ResponseEntity<ErrorResponse> handleProductAlreadyInactive(
             ProductAlreadyInactiveException ex, HttpServletRequest request) {

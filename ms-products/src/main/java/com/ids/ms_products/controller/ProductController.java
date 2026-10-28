@@ -1,10 +1,11 @@
 package com.ids.ms_products.controller;
 
 import com.ids.ms_products.dto.*;
-import com.ids.ms_products.exceptions.ProductException;
 import com.ids.ms_products.service.ProductService;
 import com.ids.ms_products.service.impl.ProductImportService;
 import com.ids.ms_products.service.impl.StockMovementService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -18,10 +19,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 import org.springframework.web.multipart.MultipartFile;
-import static com.ids.ms_products.constants.ErrorMessages.ACCESS_DENIED;
+import io.swagger.v3.oas.annotations.Parameter;
 
 import java.io.IOException;
-import java.nio.file.AccessDeniedException;
 import java.util.List;
 import java.util.Map;
 
@@ -38,30 +38,47 @@ public class ProductController {
         this.importService = importService;
     }
 
+    @Operation(
+            summary = "Registrar un nuevo producto",
+            description = "Crea un producto en el catálogo. Requiere rol ADMIN y valida precio, stock y categoría obligatorios."
+    )
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasAnyRole('CLIENT','ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<ProductResponseDTO> saveProduct(
             @Valid @RequestBody ProductRegisterRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(service.saveProduct(request));
     }
 
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(
+            summary = "Registro masivo de productos vía archivo CSV",
+            description = "Crea múltiples productos a partir de un archivo .csv. Requiere rol CLIENT o ADMIN."
+    )
+    @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyRole('CLIENT','ADMIN')")
     public ResponseEntity<ImportResultDTO> importProducts(
+            @Parameter(description = "Archivo .csv con los productos a procesar")
             @RequestParam("file") MultipartFile file) throws IOException {
         importService.validarArchivo(file);
         importService.validarEncabezados(file);
         return ResponseEntity.ok(importService.procesarCSV(file));
     }
 
-    //Consultar el catálogo con filtros y paginación. Tomás
+    @Operation(
+            summary = "Consultar el catálogo con filtros y paginación",
+            description = "Retorna una página de productos filtrados por nombre, categoría y/o rango de precios. Accesible para CLIENT y ADMIN."
+    )
     @GetMapping
     @PreAuthorize("hasAnyRole('CLIENT','ADMIN')")
-    public ResponseEntity<Page<ProductResponseDTO>> getProducts(@RequestBody(required = false) ProductRequestPagDTO request){
+    public ResponseEntity<Page<ProductResponseDTO>> getProducts(@ModelAttribute ProductRequestPagDTO request){
         return ResponseEntity.ok(service.catalogProducts(request));
     }
 
+
     //Consultar el detalle de un producto. Alfredo
+    @Operation(
+            summary = "Consultar el detalle de un producto",
+            description = "Retorna la información completa de un producto a partir de su ID."
+    )
     @GetMapping("/{id}/detail")
     //@PreAuthorize("hasAnyRole('CLIENT','ADMIN')")
     public ResponseEntity<ProductResponseDTO> getProductDetailById(@PathVariable Integer id) {
@@ -69,17 +86,25 @@ public class ProductController {
     }
 
     //Actualizar nombre, descripción, precio u otros datos permitidos. Alfredo
+    @Operation(
+            summary = "Actualizar nombre, descripción, precio u otros datos",
+            description = "Actualiza los datos permitidos de un producto existente. Requiere rol ADMIN (verificado por Spring Security y por header)."
+    )
     @PutMapping("/{id}")
     public ResponseEntity<ProductResponseDTO> updateProduct(
-        @PathVariable Integer id,
-        @Valid @RequestBody ProductRequestDTO request) {
-            
+            @PathVariable Integer id,
+            @Valid @RequestBody ProductRequestDTO request) {
+
         return ResponseEntity.ok(service.updateProduct(id, request));
     }
 
     //Ajustar existencias bajo reglas controladas. Alfredo
+    @Operation(
+            summary = "Ajustar existencias bajo reglas controladas",
+            description = "Registra un ajuste de stock (entrada, salida, corrección) para un producto. Requiere rol ADMIN."
+    )
     //Cambiar a Patch y la ruta a /{id}/stock
-    @PatchMapping("/stock-adjustments")
+    @PatchMapping("/{id}/stock")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<StockMovementResponse> adjustStock(
             @PathVariable Integer id,
@@ -90,21 +115,34 @@ public class ProductController {
     }
 
     //Opcional. Agregar Page, size y sort ya que es un listado
-    @GetMapping("/stock-movements")
+    @Operation(
+            summary = "Consultar historial de movimientos de inventario",
+            description = "Retorna el historial de movimientos de stock asociados al producto especificado."
+    )
+    @GetMapping("/stock-movements/{id}")
     public ResponseEntity<List<StockMovementResponse>> getStockMovements(@PathVariable Integer id) {
         return ResponseEntity.ok(stockMovementService.getStockMovements(id));
     }
 
 
     //Activar o desactivar un producto, ahorita solo desactiva, con /{id}/status. Edson
-    @DeleteMapping
+    @Operation(
+            summary = "Activar o desactivar producto del catálogo",
+            description = "Retira un producto del catálogo activo mediante su ID recibido en el header. Requiere rol ADMIN."
+    )
+    @PatchMapping("/{id}/status")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Map<String, String>> deleteProduct(@RequestHeader("id") Integer id) {
-        service.deleteProduct(id);
-        return ResponseEntity.ok(Map.of("message", "Producto retirado del catálogo con éxito."));
+    public ResponseEntity<Map<String, String>> deleteProduct(@PathVariable Integer id,
+                                                             @RequestParam(required = false) Boolean active) {
+        String msj = service.updateProductStatus(id, active);
+        return ResponseEntity.ok(Map.of("message", msj));
     }
 
     //Consultar si hay unidades suficientes para una cantidad solicitada. Falta recibir la cantidad requerida. Edson
+    @Operation(
+            summary = "Consultar unidades suficientes de stock",
+            description = "Consulta la cantidad de existencias disponibles para la venta de un producto. Accesible para CLIENT y ADMIN."
+    )
     @GetMapping("/{id}/stock")
     @PreAuthorize("hasAnyRole('CLIENT','ADMIN')")
     public ResponseEntity<Map<String, Object>> getProductStock(@PathVariable Integer id) {
@@ -116,12 +154,14 @@ public class ProductController {
     }
 
     //Actualizar precios. opcional
+    @Operation(
+            summary = "Actualización masiva de precios",
+            description = "Permite modificar precios en bloque bajo criterios definidos. Requiere rol ADMIN."
+    )
     @PatchMapping("/prices/bulk")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<BulkPriceUpdateResponse> bulkUpdatePrices(
             @Valid @RequestBody BulkPriceUpdateRequest request) {
         return ResponseEntity.ok(service.bulkUpdatePrices(request));
     }
-
-    //Consultar categorias disponibles. Edson.
 }

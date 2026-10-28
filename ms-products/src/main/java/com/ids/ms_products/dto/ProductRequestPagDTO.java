@@ -11,8 +11,7 @@ public class ProductRequestPagDTO {
     private Integer size;
     private SortPageType sort;
 
-    public ProductRequestPagDTO() {
-    }
+
 
     public String getName() {
         return name;

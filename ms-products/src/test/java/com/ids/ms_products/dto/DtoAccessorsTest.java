@@ -34,8 +34,11 @@ class DtoAccessorsTest {
 
     @Test
     void requestAndResponseDtosExposeTheirFields() {
-        ProductRequestDTO request = new ProductRequestDTO(
-                "Producto inicial", "Descripción inicial", new BigDecimal("10.00"), 100);
+        ProductRequestDTO request = new ProductRequestDTO();
+        request.setName("Producto inicial");
+        request.setDescription("Descripción inicial");
+        request.setPrice(new BigDecimal("10.00"));
+        request.setStock(100);
         assertEquals("Producto inicial", request.getName());
         assertEquals("Descripción inicial", request.getDescription());
         assertEquals(new BigDecimal("10.00"), request.getPrice());
