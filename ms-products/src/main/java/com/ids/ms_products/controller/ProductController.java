@@ -24,7 +24,10 @@ import io.swagger.v3.oas.annotations.Parameter;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import jakarta.validation.constraints.Positive;
+import org.springframework.validation.annotation.Validated;
 
+@Validated
 @RestController
 @RequestMapping("/api/products")
 public class ProductController {
@@ -164,4 +167,18 @@ public class ProductController {
             @Valid @RequestBody BulkPriceUpdateRequest request) {
         return ResponseEntity.ok(service.bulkUpdatePrices(request));
     }
+
+
+
+    // Consultar disponibilidad de un producto. Edson
+    @GetMapping("/{id}/availability")
+    @PreAuthorize("hasAnyRole('CLIENT','ADMIN')")
+    public ResponseEntity<ProductAvailabilityResponseDTO> getProductAvailability(
+            @PathVariable @Positive Integer id,
+            @RequestParam @Positive Integer quantity) {
+
+        return ResponseEntity.ok(service.getProductAvailability(id, quantity));
+    }
+
+
 }
