@@ -336,5 +336,84 @@ class ProductImportServiceTest {
                 .saveProduct(any(ProductRegisterRequest.class));
     }
 
+    @Test
+    void debeValidarArchivoCorrectamente() {
+        assertThrows(InvalidCsvException.class, () -> importService.validarArchivo(null));
+
+        MockMultipartFile vacio = new MockMultipartFile("file", "test.csv", "text/csv", new byte[0]);
+        assertThrows(InvalidCsvException.class, () -> importService.validarArchivo(vacio));
+
+        MockMultipartFile sinNombre = new MockMultipartFile("file", null, "text/csv", "datos".getBytes(StandardCharsets.UTF_8));
+        assertThrows(InvalidCsvException.class, () -> importService.validarArchivo(sinNombre));
+
+        MockMultipartFile txt = new MockMultipartFile("file", "test.txt", "text/plain", "datos".getBytes(StandardCharsets.UTF_8));
+        assertThrows(InvalidCsvException.class, () -> importService.validarArchivo(txt));
+
+        byte[] payloadGrande = new byte[6 * 1024 * 1024];
+        MockMultipartFile grande = new MockMultipartFile("file", "grande.csv", "text/csv", payloadGrande);
+        assertThrows(InvalidCsvException.class, () -> importService.validarArchivo(grande));
+
+        MockMultipartFile valido = new MockMultipartFile("file", "valido.csv", "text/csv", "name,description,price,stock,categoryId\n".getBytes(StandardCharsets.UTF_8));
+        assertDoesNotThrow(() -> importService.validarArchivo(valido));
+    }
+
+    @Test
+    void debeRechazarEncabezadosEnArchivoVacio() {
+        MockMultipartFile vacio = new MockMultipartFile("file", "vacio.csv", "text/csv", new byte[0]);
+        assertThrows(IllegalArgumentException.class, () -> importService.validarEncabezados(vacio));
+    }
+
+    @Test
+    void debeLeerRegistrosCSVCorrectamente() throws Exception {
+        String csv = """
+                name,description,price,stock,categoryId
+                Monitor Dell,Monitor 24 pulgadas,2500,10,2
+                """;
+        MockMultipartFile archivo = new MockMultipartFile("file", "productos.csv", "text/csv", csv.getBytes(StandardCharsets.UTF_8));
+        var lista = importService.leerRegistrosCSV(archivo);
+        assertNotNull(lista);
+        assertEquals(1, lista.size());
+        assertEquals("Monitor Dell", lista.get(0).getName());
+        assertEquals(10, lista.get(0).getStock());
+    }
+
+    @Test
+    void debeLanzarExcepcionSiCsvNoTieneRegistros() throws Exception {
+        String csv = """
+                name,description,price,stock,categoryId
+                """;
+        MockMultipartFile archivo = new MockMultipartFile("file", "vacio.csv", "text/csv", csv.getBytes(StandardCharsets.UTF_8));
+        assertThrows(IllegalArgumentException.class, () -> importService.procesarCSV(archivo));
+    }
+
+    @Test
+    void debeRechazarFilaConColumnasInconsistentes() throws Exception {
+        String csv = """
+                name,description,price,stock,categoryId
+                Teclado Mecanico,Teclado RGB,500
+                """;
+        MockMultipartFile archivo = new MockMultipartFile("file", "inconsistente.csv", "text/csv", csv.getBytes(StandardCharsets.UTF_8));
+        ImportResultDTO resultado = importService.procesarCSV(archivo);
+        assertEquals(1, resultado.getProcesados());
+        assertEquals(0, resultado.getAceptados());
+        assertEquals(1, resultado.getRechazados());
+        assertEquals(1, resultado.getErrores().size());
+        assertTrue(resultado.getErrores().get(0).getMensaje().contains("columnas incompletas"));
+    }
+
+    @Test
+    void debeRechazarProductoCuandoFallaValidacionJakarta() throws Exception {
+        String csv = """
+                name,description,price,stock,categoryId
+                ,Descripcion valida,150,150,1
+                """;
+        MockMultipartFile archivo = new MockMultipartFile("file", "invalido.csv", "text/csv", csv.getBytes(StandardCharsets.UTF_8));
+        ImportResultDTO resultado = importService.procesarCSV(archivo);
+        assertEquals(1, resultado.getProcesados());
+        assertEquals(0, resultado.getAceptados());
+        assertEquals(1, resultado.getRechazados());
+        assertEquals(1, resultado.getErrores().size());
+    }
+
 
 }
