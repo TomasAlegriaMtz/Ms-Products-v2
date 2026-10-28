@@ -4,6 +4,7 @@ package com.ids.ms_products.controller;
 
 import com.ids.ms_products.dto.CategoryResponseDTO;
 import com.ids.ms_products.service.CategoryService;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.constraints.Min;
 import org.springframework.validation.annotation.Validated;
@@ -28,6 +29,10 @@ public class CategoryController {
         this.categoryService = categoryService;
     }
 
+    @Operation(
+            summary = "Consultar las categorias disponibles",
+            description = "Consulta las categorias disponibles y las trae en pages, con size y sort"
+    )
     @GetMapping
     public Page<CategoryResponseDTO> obtenerCategorias(
             @RequestParam(defaultValue = "0") @Min(0) int page,

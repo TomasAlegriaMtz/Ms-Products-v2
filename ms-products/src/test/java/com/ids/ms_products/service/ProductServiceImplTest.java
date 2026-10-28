@@ -80,7 +80,7 @@ class ProductServiceImplTest {
         Product product = createProduct(1, true, 5);
         when(repository.findById(1)).thenReturn(Optional.of(product));
 
-        ProductResponseDTO result = service.getProductById(1);
+        ProductResponseDTO result = service.getProductDetailById(1);
 
         assertEquals(1, result.getId());
         assertEquals("Producto de prueba", result.getName());
@@ -91,7 +91,7 @@ class ProductServiceImplTest {
     void getProductByIdThrowsWhenProductDoesNotExist() {
         when(repository.findById(1)).thenReturn(Optional.empty());
 
-        assertThrows(ProductNotFoundException.class, () -> service.getProductById(1));
+        assertThrows(ProductNotFoundException.class, () -> service.getProductDetailById(1));
     }
 
     @Test
@@ -583,5 +583,63 @@ class ProductServiceImplTest {
         ProductRequestDTO request = validProductUpdateRequest();
         mutation.accept(request);
         assertThrows(ProductException.class, () -> service.updateProduct(1, request));
+    }
+
+    @Test
+    void updateProductStatusActivatesInactiveProduct() {
+        Product product = createProduct(1, false, 5);
+        when(repository.findById(1)).thenReturn(Optional.of(product));
+        when(repository.save(any(Product.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        String result = service.updateProductStatus(1, true);
+
+        assertTrue(result.contains("activado"));
+        assertTrue(product.getActive());
+        verify(repository).save(product);
+    }
+
+    @Test
+    void updateProductStatusThrowsWhenAlreadyActive() {
+        Product product = createProduct(1, true, 5);
+        when(repository.findById(1)).thenReturn(Optional.of(product));
+
+        assertThrows(ProductException.class, () -> service.updateProductStatus(1, true));
+    }
+
+    @Test
+    void updateProductStatusDeactivatesActiveProduct() {
+        Product product = createProduct(1, true, 5);
+        when(repository.findById(1)).thenReturn(Optional.of(product));
+        when(repository.save(any(Product.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        String result = service.updateProductStatus(1, false);
+
+        assertTrue(result.contains("retirado"));
+        assertFalse(product.getActive());
+        verify(repository).save(product);
+    }
+
+    @Test
+    void updateProductStatusThrowsWhenAlreadyInactive() {
+        Product product = createProduct(1, false, 5);
+        when(repository.findById(1)).thenReturn(Optional.of(product));
+
+        assertThrows(ProductAlreadyInactiveException.class, () -> service.updateProductStatus(1, false));
+    }
+
+    @Test
+    void updateProductStatusToggleWhenStatusIsNull() {
+        Product activeProduct = createProduct(1, true, 5);
+        when(repository.findById(1)).thenReturn(Optional.of(activeProduct));
+        when(repository.save(any(Product.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        String res1 = service.updateProductStatus(1, null);
+        assertTrue(res1.contains("retirado"));
+
+        Product inactiveProduct = createProduct(2, false, 5);
+        when(repository.findById(2)).thenReturn(Optional.of(inactiveProduct));
+
+        String res2 = service.updateProductStatus(2, null);
+        assertTrue(res2.contains("activado"));
     }
 }
