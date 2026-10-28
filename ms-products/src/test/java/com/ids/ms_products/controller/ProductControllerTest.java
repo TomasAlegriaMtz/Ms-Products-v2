@@ -5,6 +5,7 @@ import com.ids.ms_products.exceptions.GlobalExceptionHandler;
 import com.ids.ms_products.exceptions.ProductAlreadyInactiveException;
 import com.ids.ms_products.exceptions.ProductNotFoundException;
 import com.ids.ms_products.service.IProductService;
+import com.ids.ms_products.service.ProductService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,7 +34,7 @@ class ProductControllerTest {
     private MockMvc mockMvc;
 
     @Mock
-    private IProductService service;
+    private ProductService service;
 
     @InjectMocks
     private ProductController controller;

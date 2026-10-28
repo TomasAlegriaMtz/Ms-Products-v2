@@ -23,8 +23,7 @@ class PromotionControllerTest {
     private PromotionService promotionService;
 
     @InjectMocks
-    private PromotionController controller;
-
+    private ProductController controller;
     @Test
     void delegatesCreateUpdateAndActivePromotionRequests() {
         LocalDateTime startsAt = LocalDateTime.of(2026, 10, 19, 10, 0);

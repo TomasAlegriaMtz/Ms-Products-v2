@@ -50,15 +50,14 @@ public class ProductServiceImpl implements ProductService{
     public ProductResponseDTO saveProduct(ProductRegisterRequest dto) {
 
         if (dto.getName() == null || dto.getName().isBlank()){
-            throw new ProductException("El nombre del producto es obligstorio");
+            throw new ProductNotValidException(String.format(ErrorMessages.PRODUCT_NAME_INVALID));
         }
 
         if (dto.getPrice() == null || dto.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new ProductException("El precio debe ser mayor a cero");
+            throw new ProductNotValidException(String.format(ErrorMessages.PRODUCT_PRICE_INVALID));
         }
 
         validarReglaStock(dto.getStock());
-
 
         String productName = dto.getName().trim();
         if (repository.existsByNameIgnoreCase(productName)) {
@@ -67,7 +66,7 @@ public class ProductServiceImpl implements ProductService{
         }
 
         Category category = categoryRepository.findById(dto.getCategoryId())
-                .orElseThrow(() -> new ProductException("La categoría no existe"));
+                .orElseThrow(() -> new ProductException(String.format(ErrorMessages.CATEGORY_INVALID)));
 
         Product product = new Product();
 
@@ -85,29 +84,26 @@ public class ProductServiceImpl implements ProductService{
 
     @Override
     public ProductResponseDTO getProductDetailById(Integer id) {
-        Product p = repository.findById(id)
-                .orElseThrow(() -> new ProductNotFoundException(String.format(ErrorMessages.PRODUCT_NOT_FOUND, id)));
-
+        Product p = findProductById(id);
         return responseDTO(p);
     }
 
     @Override
     public ProductResponseDTO updateProduct(Integer id, ProductRequestDTO dto) {
-        Product product = repository.findById(id)
-                .orElseThrow(() -> new ProductNotFoundException("No se encontró el producto con el ID: " + id));
+        Product product = findProductById(id);
 
         if (dto.getName() == null || dto.getName().isBlank()){
-            throw new ProductException("El nombre del producto es obligatorio");
+            throw new ProductNotValidException(String.format(ErrorMessages.PRODUCT_NAME_INVALID));
         }
 
         if (dto.getPrice() == null || dto.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new ProductException("El precio debe ser mayor a cero");
+            throw new ProductNotValidException(String.format(ErrorMessages.PRODUCT_PRICE_INVALID));
         }
 
         validarReglaStock(dto.getStock());
 
         Category category = categoryRepository.findById(dto.getCategoryId())
-                .orElseThrow(() -> new ProductException("La categoría no existe"));
+                .orElseThrow(() -> new ProductException(String.format(ErrorMessages.CATEGORY_INVALID)));
 
         product.setName(dto.getName());
         product.setDescription(dto.getDescription());
@@ -124,9 +120,7 @@ public class ProductServiceImpl implements ProductService{
     @Override
     @Transactional
     public void deleteProduct(Integer id) {
-        Product product = repository.findById(id)
-                .orElseThrow(() -> new ProductNotFoundException(
-                        "No se encontró el producto con id " + id));
+        Product product = findProductById(id);
         if (Boolean.FALSE.equals(product.getActive())) {
             throw new ProductAlreadyInactiveException("El producto ya fue retirado del catálogo");
         }
@@ -136,9 +130,7 @@ public class ProductServiceImpl implements ProductService{
 
     @Override
     public Integer getStockByProductId(Integer id) {
-        Product product = repository.findById(id)
-                .orElseThrow(() -> new ProductNotFoundException("No se encontró el producto con id " + id));
-
+        Product product = findProductById(id);
         return product.getStock();
     }
 
@@ -286,5 +278,9 @@ public class ProductServiceImpl implements ProductService{
     }
     private List<ProductResponseDTO> listResponseDTO(List<Product> products){
         return products.stream().map(this::responseDTO).toList();
+    }
+    private Product findProductById(Integer id){
+        return repository.findById(id)
+                .orElseThrow(() -> new ProductNotFoundException(String.format(ErrorMessages.PRODUCT_NOT_FOUND, id)));
     }
 }
